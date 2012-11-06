@@ -8,7 +8,11 @@ describe Pomux do
     pomux.stub!(:testing?) { true }
     FileUtils.cp('spec/fixtures/pomux_not_started', 'spec/.pomux')
   end
-  after { FileUtils.rm(path) }
+
+  after do
+    Timecop.return
+    FileUtils.rm(path)
+  end
 
   it "should write ~/.pomux to spec/.pomux when testing" do
     File.exists?(path).should be_true
@@ -28,6 +32,16 @@ describe Pomux do
       pomux.info['started'].should be_nil
       pomux.info['count'].should == 0
       pomux.info['last'].should be_a_kind_of(Time)
+    end
+  end
+
+  describe "#elapsed" do
+    it "should tell how long since the last pomux ended" do
+      Timecop.freeze
+      pomux.abort
+      pomux.elapsed.should == 0
+      Timecop.travel(Time.now + 60*45)
+      pomux.elapsed.should be_within(0.1).of(45)
     end
   end
 end

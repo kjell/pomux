@@ -1,5 +1,7 @@
 source 'http://rubygems.org'
 
+gem 'timecop'
+
 gem 'guard'
 gem'rb-fsevent'
 gem 'guard-bundler'
