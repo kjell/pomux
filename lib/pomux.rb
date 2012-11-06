@@ -3,6 +3,8 @@
 Bundler.require
 
 class Pomux
+  def testing?; false; end
+
   def path
     File.expand_path("~/.pomux")
   end
@@ -83,6 +85,7 @@ class Pomux
   end
 
   def notify(message, opts={})
+    return if testing?
     spawn "/usr/local/bin/growlnotify pomux #{'-s' if opts[:sticky]} -m '#{message}'"
     spawn "tmux refresh-client -S -t $(tmux list-clients -F '\#{client_tty}')"
     message
