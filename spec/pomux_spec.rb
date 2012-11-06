@@ -44,4 +44,14 @@ describe Pomux do
       pomux.elapsed.should be_within(0.1).of(45)
     end
   end
+
+  describe "#started?" do
+    it "should be true" do
+      pomux.should_not be_started
+      pomux.start
+      pomux.should be_started
+      pomux.abort
+      pomux.should_not be_started
+    end
+  end
 end
