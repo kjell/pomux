@@ -1,10 +1,8 @@
 # encoding: utf-8
-%w(bundler rubygems yaml).each {|l| require l }
-Bundler.require
+%w(rubygems bundler yaml).each {|l| require l }
+Bundler.require(:test) if defined?(POMUX_TESTING)
 
 class Pomux
-  def testing?; false; end
-
   def path
     File.expand_path("~/.pomux")
   end
