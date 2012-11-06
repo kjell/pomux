@@ -1,6 +1,6 @@
-#!/usr/bin/env ruby-local-exec
 # encoding: utf-8
-require 'yaml'
+%w(bundler rubygems yaml).each {|l| require l }
+Bundler.require
 
 class Pomux
   def path
@@ -147,8 +147,4 @@ class Pomux
     info['last'] = Time.now
     save
   end
-end
-
-Pomux.new.tap do |p|
-  !ARGV.empty? ? ARGV.map {|a| print p.send(a)} : p.growl
 end
