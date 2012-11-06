@@ -3,15 +3,20 @@ require 'spec_helper'
 describe Pomux do
   let(:pomux) { Pomux.new }
   let(:path) { File.expand_path('../.pomux', __FILE__) }
+  let(:notifications) { [] }
   before do
     pomux.stub!(:path) { path }
     pomux.stub!(:testing?) { true }
+    Process.stub(:spawn).with(any_args()) do |args|
+      notifications << args
+    end
     FileUtils.cp('spec/fixtures/pomux_not_started', 'spec/.pomux')
   end
 
   after do
     Timecop.return
     FileUtils.rm(path)
+    notifications.clear
   end
 
   it "should write ~/.pomux to spec/.pomux when testing" do
@@ -30,10 +35,20 @@ describe Pomux do
       lambda { pomux.start }.should change(pomux, :started)
     end
 
+    it "should notify" do
+      Process.should_receive(:spawn).exactly(3).times
+      pomux.start
+      notifications.should have(3).items
+      [/growlnotify/, /refresh-client/, /killall Mail/].each do |note|
+        notifications.grep(note).should_not be_nil
+      end
+    end
+
     it "shouldn't start if already #started?" do
       pomux.should_not_receive(:save)
       pomux.stub(:started?) { true }
       lambda { pomux.start }.should_not change(pomux, :started)
+      notifications.should be_empty
     end
   end
 

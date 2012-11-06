@@ -23,7 +23,7 @@ class Pomux
     save
     job = elapsed > 5 ? 'good job' : 'chill out!'
     notify "#{elapsed.to_i} minute break, #{job}."
-    spawn("killall Mail")
+    Process.spawn("killall Mail")
   end
 
   def method_missing(m, *args)
@@ -80,14 +80,13 @@ class Pomux
     info['last'] = Time.now
     save
     # `~/bin/itunes_stop_after_current_track.rb` # Needs to fork out probably
-    spawn "~/bin/itunes_stop_after_current_track.rb"
+    Process.spawn "~/bin/itunes_stop_after_current_track.rb"
     notify 'done!', :sticky => true
   end
 
   def notify(message, opts={})
-    return if testing?
-    spawn "/usr/local/bin/growlnotify pomux #{'-s' if opts[:sticky]} -m '#{message}'"
-    spawn "tmux refresh-client -S -t $(tmux list-clients -F '\#{client_tty}')"
+    Process.spawn "/usr/local/bin/growlnotify pomux #{'-s' if opts[:sticky]} -m '#{message}'"
+    Process.spawn "tmux refresh-client -S -t $(tmux list-clients -F '\#{client_tty}')"
     message
   end
 
@@ -144,7 +143,7 @@ class Pomux
     c = count
     "#{c*30}m + #{elapsed}m #{Dir.pwd[/\/(\w+)$/, 1]}\n\n---\n\n".tap do |s|
       s << `git log --author="$(whoami)" --since '#{(c*30 + elapsed).to_i} minutes ago'`
-      spawn %[echo "#{s}" | pbcopy && open ~/bin/day-one-activate-paste.app]
+      Process.spawn %[echo "#{s}" | pbcopy && open ~/bin/day-one-activate-paste.app]
       reset
     end
     info['last'] = Time.now
