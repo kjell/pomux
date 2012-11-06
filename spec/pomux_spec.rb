@@ -80,4 +80,21 @@ describe Pomux do
       pomux.should_not be_started
     end
   end
+
+  describe "#remaining, #done?" do
+    it "should be ~25 on start" do
+      Timecop.freeze
+      pomux.start
+      pomux.remaining.should == 25
+      pomux.should_not be_done
+    end
+
+    it "should say how much time is remaining" do
+      Timecop.freeze
+      pomux.start
+      Timecop.travel(Time.now + 25*60)
+      pomux.remaining.should <= 0
+      pomux.should be_done
+    end
+  end
 end
