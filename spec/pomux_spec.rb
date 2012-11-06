@@ -5,6 +5,7 @@ describe Pomux do
   let(:path) { File.expand_path('../.pomux', __FILE__) }
   let(:notifications) { [] }
   before do
+    Timecop.freeze
     pomux.stub!(:path) { path }
     pomux.stub!(:testing?) { true }
     Process.stub(:spawn).with(any_args()) do |args|
@@ -27,9 +28,9 @@ describe Pomux do
     subject { pomux.start; pomux }
 
     it { should be_started }
-    its(:started) { should be_within(5).of(Time.now) }
+    its(:started) { should == Time.now }
     its(:count) { should == 0 }
-    its(:ended) { should_not be_within(60*30).of(Time.now) } # TODO: Bad test. Write the pomux fixture in setup instead of copying one with the same ended:
+    its(:ended) { should_not == Time.now } # TODO: Bad test. Write the pomux fixture in setup instead of copying one with the same ended:
 
     it "should change #started" do
       lambda { pomux.start }.should change(pomux, :started)
@@ -64,11 +65,10 @@ describe Pomux do
 
   describe "#elapsed" do
     it "should tell how long since the last pomux ended" do
-      Timecop.freeze
       pomux.abort
       pomux.elapsed.should == 0
       Timecop.travel(Time.now + 60*45)
-      pomux.elapsed.should be_within(0.1).of(45)
+      pomux.elapsed.should be_within(0.001).of(45)
     end
   end
 
@@ -98,14 +98,12 @@ describe Pomux do
 
   describe "#remaining, #done?" do
     it "should be ~25 on start" do
-      Timecop.freeze
       pomux.start
       pomux.remaining.should == 25
       pomux.should_not be_done
     end
 
     it "should say how much time is remaining" do
-      Timecop.freeze
       pomux.start
       Timecop.travel(Time.now + 25*60)
       pomux.remaining.should <= 0
