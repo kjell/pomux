@@ -141,6 +141,7 @@ class Pomux
     c = count
     "#{c*30}m + #{elapsed}m #{Dir.pwd[/\/(\w+)$/, 1]}\n\n---\n\n".tap do |s|
       s << `git log --author="$(whoami)" --since '#{(c*30 + elapsed).to_i} minutes ago'`
+      Process.spawn %[open -a "Day One"]
       Process.spawn %[echo "#{s}" | pbcopy && open ~/bin/day-one-activate-paste.app]
       reset
     end
