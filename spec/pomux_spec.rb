@@ -97,7 +97,7 @@ describe Pomux do
     end
   end
 
-  describe "#remaining, #done?" do
+  describe "#remaining, #done?, #progress" do
     before { Timecop.freeze; pomux.start }
     subject { pomux }
 
@@ -124,11 +124,16 @@ describe Pomux do
       it { should be_done }
     end
 
-    it "should say how much time is remaining" do
-      pomux.start
-      Timecop.travel(Time.now + 25*60)
-      pomux.remaining.should <= 0
-      pomux.should be_done
+    context "after 5m of break" do
+      before { pomux.done!; Timecop.travel(6 * 60) }
+      let(:counters) {%w(⦿ ➊ ➋ ➌ ➍ ➎ ➏ ➐ ➑ ➒ ➓)}
+
+      (0..10).each do |count|
+        context("after #{count} pomuxes") do
+          before { pomux.stub(:count) { count } }
+          its(:progress) { should == counters[count] }
+        end
+      end
     end
   end
 
@@ -162,32 +167,6 @@ describe Pomux do
         lambda {pomux.done!}.should_not change(pomux, :count)
 
         pomux.ended.should_not == Time.now
-      end
-    end
-  end
-
-  describe "#progress" do
-    before { pomux.start }
-    subject { pomux.progress }
-
-    context "when running" do
-      it { should == '25m' }
-    end
-
-    context "when on break" do
-      before { pomux.done! }
-      it "should be one of %w(⇈  ᚚ  ⇶)"
-    end
-
-    context "after 5m of break" do
-      before { pomux.start; pomux.done!; Timecop.travel(6 * 60) }
-      let(:counters) {%w(⦿ ➊ ➋ ➌ ➍ ➎ ➏ ➐ ➑ ➒ ➓)}
-
-      (0..10).each do |count|
-        context("after #{count} pomuxes") do
-          before { pomux.stub(:count) { count } }
-          it { should == counters[count] }
-        end
       end
     end
   end
