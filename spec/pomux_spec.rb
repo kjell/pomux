@@ -235,6 +235,7 @@ describe Pomux do
       it "originates 4 notifications" do # TODO: Split notifications and Process.spawns
         notifications.should have(4).items
       end
+      its(:loggers) { should == [PomuxLogger, GitLogger] }
     end
 
     context "with count > 0" do
@@ -247,8 +248,21 @@ describe Pomux do
       end
     end
 
-    context "with git commits" do
-      it "should include them"
+    it "should include git commits" do
+      GitLogger.any_instance.stub(:log) { "Git commit info" }
+      pomux.log_string.should =~ /Git commit info/
+    end
+
+    context "with a custom logger" do
+      class StarLogger < PomuxLogger
+        def log
+          '****'
+        end
+      end
+      before { pomux.loggers << StarLogger }
+
+      its(:loggers) { should include(StarLogger) }
+      its(:log_string) { should =~ /\*+/ }
     end
   end
 end

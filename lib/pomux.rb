@@ -143,10 +143,31 @@ class Pomux
     save
   end
 
+  def loggers
+    @loggers ||= [PomuxLogger, GitLogger]
+  end
+
   def log_string
-    minutes = count*30
-    "#{minutes}m + #{elapsed}m #{Dir.pwd[/\/(\w+)$/, 1]}\n\n---\n\n".tap do |s|
-      s << `git log --author="$(whoami)" --since '#{(minutes + elapsed).to_i} minutes ago'`
-    end
+    loggers.map{|logger| logger.new(self).log}.join
+  end
+end
+
+class PomuxLogger
+  attr_accessor :pomux
+  def initialize(pomux)
+    @pomux = pomux
+  end
+
+  def minutes;  pomux.count*30; end
+  def elapsed; pomux.elapsed; end
+
+  def log
+    "#{minutes}m + #{elapsed}m #{Dir.pwd[/\/(\w+)$/, 1]}\n\n---\n\n"
+  end
+end
+
+class GitLogger < PomuxLogger
+  def log
+    `git log --author="$(whoami)" --since '#{(minutes + elapsed).to_i} minutes ago'`
   end
 end
