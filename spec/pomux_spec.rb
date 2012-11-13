@@ -224,32 +224,35 @@ describe Pomux do
   end
 
   describe "#log" do
-    before { Timecop.freeze; pomux.log }
+    before do
+      Timecop.freeze
+      GitLogger.any_instance.stub(:log) { "Git commit info" }
+    end
     subject { pomux }
 
     context "with nothing accomplished" do
-      before { pomux.stub(:count) { 0 }; pomux.abort }
+      before { pomux.stub(:count) { 0 }; pomux.abort; pomux.log }
       its(:ended) { should == Time.now }
       its(:log_string) { should =~ /0m/ }
       its(:log_string) { should =~ /---/ }
       it "originates 4 notifications" do # TODO: Split notifications and Process.spawns
         notifications.should have(4).items
       end
-      its(:loggers) { should == [PomuxLogger, GitLogger] }
+      its(:loggers) { should == [PomuxLogger, GitLogger, DayOneLogger] }
     end
 
     context "with count > 0" do
-      before { pomux.stub(:count) { 2 }; pomux.abort }
+      before { pomux.stub(:count) { 2 }; pomux.abort; pomux.log }
       its(:log_string) { should =~ /60m/ }
 
       context "plus some extra time" do
-        before { pomux.stub(:elapsed) { 5 }}
+        before { pomux.stub(:elapsed) { 5 }; pomux.log}
         its(:log_string) { should =~ /\+ 5m/ }
       end
     end
 
     it "should include git commits" do
-      GitLogger.any_instance.stub(:log) { "Git commit info" }
+      pomux.log
       pomux.log_string.should =~ /Git commit info/
     end
 
@@ -259,10 +262,18 @@ describe Pomux do
           '****'
         end
       end
-      before { pomux.loggers << StarLogger }
+      before { pomux.stub(:loggers) {[StarLogger]}; pomux.log }
 
       its(:loggers) { should include(StarLogger) }
       its(:log_string) { should =~ /\*+/ }
+    end
+
+    context "DayOneLogger" do
+      before { pomux.stub(:loggers) {[DayOneLogger]}; pomux.log }
+
+      it "should create two more notifications" do
+        notifications.should have(2).items
+      end
     end
   end
 end

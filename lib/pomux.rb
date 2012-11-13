@@ -136,26 +136,28 @@ class Pomux
   end
 
   def log
-    Process.spawn %[open -a "Day One"]
-    Process.spawn %[echo "#{log_string}" | pbcopy && open ~/bin/day-one-activate-paste.app]
+    @log_string = loggers.inject("") {|log, logger| log << logger.new(self, log).log}
     reset
     info['last'] = Time.now
     save
+    @log_string
   end
 
   def loggers
-    @loggers ||= [PomuxLogger, GitLogger]
+    @loggers ||= [PomuxLogger, GitLogger, DayOneLogger]
   end
 
   def log_string
-    loggers.map{|logger| logger.new(self).log}.join
+    @log_string
   end
 end
 
 class PomuxLogger
-  attr_accessor :pomux
-  def initialize(pomux)
+  attr_accessor :pomux, :string
+
+  def initialize(pomux, string)
     @pomux = pomux
+    @string = string
   end
 
   def minutes;  pomux.count*30; end
@@ -169,5 +171,13 @@ end
 class GitLogger < PomuxLogger
   def log
     `git log --author="$(whoami)" --since '#{(minutes + elapsed).to_i} minutes ago'`
+  end
+end
+
+class DayOneLogger < PomuxLogger
+  def log
+    Process.spawn %[open -a "Day One"]
+    Process.spawn %[echo "#{string}" | pbcopy && open ~/bin/day-one-activate-paste.app]
+    ''
   end
 end
