@@ -138,7 +138,18 @@ describe Pomux do
   end
 
   describe "#poll" do
-
+    subject { pomux.poll }
+    context "when on break" do
+      it { should be_nil }
+    end
+    context "when started" do
+      before { pomux.start; Timecop.travel(5*60) }
+      it { should == 20 }
+    end
+    context "when done" do
+      before { pomux.start; Timecop.travel(25*60) }
+      it { should == 0 }
+    end
   end
 
   describe "#done!" do
