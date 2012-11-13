@@ -60,8 +60,9 @@ class Pomux
     if started?
       if done?
         done!
+        0
       else
-        remaining.to_i + 1
+        remaining.ceil
       end
     end
   rescue
@@ -73,11 +74,11 @@ class Pomux
   end
 
   def done!
+    return unless started?
     info['started'] = nil
     info['count'] += 1
     info['last'] = Time.now
     save
-    # `~/bin/itunes_stop_after_current_track.rb` # Needs to fork out probably
     Process.spawn "~/bin/itunes_stop_after_current_track.rb"
     notify 'done!', :sticky => true
   end

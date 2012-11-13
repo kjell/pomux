@@ -1,3 +1,4 @@
+# encoding: utf-8
 require 'spec_helper'
 
 describe Pomux do
@@ -97,10 +98,30 @@ describe Pomux do
   end
 
   describe "#remaining, #done?" do
-    it "should be ~25 on start" do
-      pomux.start
-      pomux.remaining.should == 25
-      pomux.should_not be_done
+    before { Timecop.freeze; pomux.start }
+    subject { pomux }
+
+    context "at the start" do
+      it { should be_done_in('25m') }
+      it { should_not be_done }
+    end
+
+    context "after 1 minute" do
+      before { Timecop.travel(1 * 60) }
+      it { should be_done_in('24m') }
+      it { should_not be_done }
+    end
+
+    context "after 24 minutes" do
+      before { Timecop.travel(24 * 60) }
+      it { should be_done_in('1m') }
+      it { should_not be_done }
+    end
+
+    context "after 25 minutes" do
+      before { Timecop.travel(25 * 60) }
+      it { should be_done_in([/[⇈  ᚚ  ⇶]/, 0]) }
+      it { should be_done }
     end
 
     it "should say how much time is remaining" do
@@ -108,6 +129,40 @@ describe Pomux do
       Timecop.travel(Time.now + 25*60)
       pomux.remaining.should <= 0
       pomux.should be_done
+    end
+  end
+
+  describe "#poll" do
+
+  end
+
+  describe "#done!" do
+    context "when inside a pomux" do
+      before { pomux.start }
+
+      it "should increment the count" do
+        lambda {pomux.done!}.should change(pomux, :count).by(1)
+      end
+
+      it "should reset started and record last" do
+        pomux.done!
+        pomux.started.should be_nil
+        pomux.ended.should == Time.now
+      end
+    end
+
+    it "should only happen once when called multiple times" do
+      pomux.stub(:save).once
+      pomux.done!
+      pomux.done!
+    end
+
+    context "when not running a pomux" do
+      it "shouldn't have any effect" do
+        lambda {pomux.done!}.should_not change(pomux, :count)
+
+        pomux.ended.should_not == Time.now
+      end
     end
   end
 
