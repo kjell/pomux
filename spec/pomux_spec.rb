@@ -110,4 +110,30 @@ describe Pomux do
       pomux.should be_done
     end
   end
+
+  describe "#progress" do
+    before { pomux.start }
+    subject { pomux.progress }
+
+    context "when running" do
+      it { should == '25m' }
+    end
+
+    context "when on break" do
+      before { pomux.done! }
+      it "should be one of %w(⇈  ᚚ  ⇶)"
+    end
+
+    context "after 5m of break" do
+      before { pomux.start; pomux.done!; Timecop.travel(6 * 60) }
+      let(:counters) {%w(⦿ ➊ ➋ ➌ ➍ ➎ ➏ ➐ ➑ ➒ ➓)}
+
+      (0..10).each do |count|
+        context("after #{count} pomuxes") do
+          before { pomux.stub(:count) { count } }
+          it { should == counters[count] }
+        end
+      end
+    end
+  end
 end

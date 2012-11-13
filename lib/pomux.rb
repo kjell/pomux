@@ -92,11 +92,11 @@ class Pomux
     (ending - Time.now) / 60
   end
 
-  def to_s
+  def progress
     if started?
       "#{poll}m"
     elsif (Time.now - ended) <= 5*60
-      ['⇈', ' ᚚ ', '⇶'].sample
+      %w(⇈  ᚚ  ⇶).sample
     else
       # ⦿ ① ② ③ ④ ⑤ ⑥ ⑦ ⑧ ⑨ ⑩ ⑪ ⑫ ⑬ ⑭ ⑮ ⑯ ⑰
       # ⓵ ⓶ ⓷ ⓸ ⓹ ⓺ ⓻ ⓼ ⓽ ⓾
@@ -108,9 +108,9 @@ class Pomux
   end
 
   def report
-    to_s
+    progress
   ensure
-    File::write(File.expand_path('~/.pomux_report'), to_s)
+    File::write(File.expand_path('~/.pomux_report'), progress)
   end
 
   def reset
@@ -134,7 +134,7 @@ class Pomux
   alias_method :quit, :abort
 
   def growl
-    notify to_s
+    notify progress
   end
 
   def log
