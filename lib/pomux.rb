@@ -65,8 +65,6 @@ class Pomux
         remaining.ceil
       end
     end
-  rescue
-    notify $!
   end
 
   def done?
@@ -110,11 +108,10 @@ class Pomux
 
   def report
     progress
-  ensure
-    File::write(File.expand_path('~/.pomux_report'), progress)
   end
 
   def reset
+    return unless started? || count > 0
     output = "Resetting from #{info['count']}."
     info['count'] = 0
     save
@@ -139,14 +136,17 @@ class Pomux
   end
 
   def log
-    c = count
-    "#{c*30}m + #{elapsed}m #{Dir.pwd[/\/(\w+)$/, 1]}\n\n---\n\n".tap do |s|
-      s << `git log --author="$(whoami)" --since '#{(c*30 + elapsed).to_i} minutes ago'`
-      Process.spawn %[open -a "Day One"]
-      Process.spawn %[echo "#{s}" | pbcopy && open ~/bin/day-one-activate-paste.app]
-      reset
-    end
+    Process.spawn %[open -a "Day One"]
+    Process.spawn %[echo "#{log_string}" | pbcopy && open ~/bin/day-one-activate-paste.app]
+    reset
     info['last'] = Time.now
     save
+  end
+
+  def log_string
+    minutes = count*30
+    "#{minutes}m + #{elapsed}m #{Dir.pwd[/\/(\w+)$/, 1]}\n\n---\n\n".tap do |s|
+      s << `git log --author="$(whoami)" --since '#{(minutes + elapsed).to_i} minutes ago'`
+    end
   end
 end

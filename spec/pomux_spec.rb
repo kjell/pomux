@@ -52,6 +52,13 @@ describe Pomux do
       lambda { pomux.start }.should_not change(pomux, :started)
       notifications.should be_empty
     end
+
+    context "with a slip" do
+      it "should start the pomux <slip> minutes ago" do
+        pomux.start_minus_5
+        pomux.started.should == Time.now - 60*5
+      end
+    end
   end
 
   describe "#info" do
@@ -179,6 +186,69 @@ describe Pomux do
 
         pomux.ended.should_not == Time.now
       end
+    end
+  end
+
+  describe "#reset" do
+    context "when not started" do
+      it "doesn't reset when not started" do
+        pomux.stub(:save).never
+        pomux.reset
+      end
+
+      it "unless #count > 0" do
+        pomux.info['count'] = 3 # How do I stub a method once?
+        lambda { pomux.reset }.should change(pomux, :count).to(0)
+      end
+    end
+
+    context "when started" do
+      before { pomux.info['count'] = 3; pomux.start }
+
+      it "resets the count" do
+        lambda { pomux.reset }.should change(pomux, :count).to(0)
+      end
+    end
+  end
+
+  describe "#report" do
+    it "should echo #progress" do
+      pomux.report.should == pomux.progress
+    end
+  end
+
+  describe "#growl" do
+    before { pomux.growl }
+    subject { notifications }
+    it { should have(2).notifications }
+  end
+
+  describe "#log" do
+    before { Timecop.freeze; pomux.log }
+    subject { pomux }
+
+    context "with nothing accomplished" do
+      before { pomux.stub(:count) { 0 }; pomux.abort }
+      its(:ended) { should == Time.now }
+      its(:log_string) { should =~ /0m/ }
+      its(:log_string) { should =~ /---/ }
+      it "originates 4 notifications" do # TODO: Split notifications and Process.spawns
+        notifications.should have(4).items
+      end
+    end
+
+    context "with count > 0" do
+      before { pomux.stub(:count) { 2 }; pomux.abort }
+      its(:log_string) { should =~ /60m/ }
+
+      context "plus some extra time" do
+        before { pomux.stub(:elapsed) { 5 }}
+        its(:log_string) { should =~ /\+ 5m/ }
+      end
+    end
+
+    context "with git commits" do
+      it "should include them"
     end
   end
 end
