@@ -22,6 +22,7 @@ class Pomux
     job = elapsed > 5 ? 'good job' : 'chill out!'
     notify "#{elapsed.to_i} minute break, #{job}."
     Process.spawn("killall Mail")
+    nil
   end
 
   def method_missing(m, *args)
