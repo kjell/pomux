@@ -146,15 +146,15 @@ class Pomux
   end
 
   def loggers
-    @loggers ||= [PomuxLogger, GitLogger, DayOneLogger]
+    @loggers ||= [PomuxLogger, GitLogger, VimDiaryLogger]
   end
 
   def log_string
     @log_string
   end
 
-  def write_log_string_to_file
-    File::write(File.expand_path("~/.pomux_log"), log_string)
+  def write_log_string_to_file(string=nil)
+    File::write(File.expand_path("~/.pomux_log"), string || log_string)
   end
 end
 
@@ -170,13 +170,14 @@ class PomuxLogger
   def elapsed; pomux.elapsed; end
 
   def log
-    "#{minutes}m + #{elapsed}m #{Dir.pwd[/\/(\w+)$/, 1]}\n\n---\n\n"
+    "#{minutes}m + #{elapsed}m #{Dir.pwd[/\/(\w+)$/, 1]}"
   end
 end
 
 class GitLogger < PomuxLogger
   def log
-    `git log --author="$(whoami)" --since '#{(minutes + elapsed).to_i} minutes ago'`
+    git = `git log --author="$(whoami)" --since '#{(minutes + elapsed).to_i} minutes ago'`
+    git.empty? ? '' : "\n\n---\n\n#{git}"
   end
 end
 
@@ -184,6 +185,15 @@ class DayOneLogger < PomuxLogger
   def log
     Process.spawn %[open -a "Day One"]
     Process.spawn %[echo "#{string}" | pbcopy && open ~/bin/day-one-activate-paste.app]
+    ''
+  end
+end
+
+class VimDiaryLogger < PomuxLogger
+  def log
+    pomux.write_log_string_to_file(string)
+    Process.spawn "vim -c VimwikiMakeDiaryNote -c 'normal G' -c 'r ~/.pomux_log'"
+    Process.wait
     ''
   end
 end
