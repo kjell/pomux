@@ -138,6 +138,7 @@ class Pomux
 
   def log
     @log_string = loggers.inject("") {|log, logger| log << logger.new(self, log).log}
+    write_log_string_to_file
     reset
     info['last'] = Time.now
     save
@@ -150,6 +151,10 @@ class Pomux
 
   def log_string
     @log_string
+  end
+
+  def write_log_string_to_file
+    File::write(File.expand_path("~/.pomux_log"), log_string)
   end
 end
 

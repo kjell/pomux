@@ -256,6 +256,13 @@ describe Pomux do
       pomux.log_string.should =~ /Git commit info/
     end
 
+    it "should write log output to ~/.pomux_log" do
+      log_file = File.expand_path("~/.pomux_log")
+      pomux.log
+      File.exists?(log_file).should == true
+      File.read(log_file).should =~ /Git commit info/
+    end
+
     context "with a custom logger" do
       class StarLogger < PomuxLogger
         def log
